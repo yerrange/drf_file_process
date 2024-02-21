@@ -3,26 +3,31 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - main 
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Docker
-        uses: actions/setup-python@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Build Docker image
         run: docker build -t my-docker-image .
 
-      - name: Push Docker image to GitHub Packages
-        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
-        run: docker tag my-docker-image docker.pkg.github.com/${{ github.repository }}/my-docker-image:latest
-        run: docker push docker.pkg.github.com/${{ github.repository }}/my-docker-image:latest
+      - name: Run Docker container
+        run: docker run -d -p 4000:80 my-docker-image
 
       - name: Deploy to GitHub Pages
         run: |
-          docker compose stop && docker compose up --build
+          mkdir gh-pages
+          cp -r * gh-pages/
+          cd gh-pages
+          echo "<your-custom-domain>" > CNAME
+          git init
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git add .
+          git commit -m "Deploy to GitHub Pages"
+          git push --force "https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" master:gh-pages
