@@ -1,6 +1,16 @@
+from django.conf.urls.static import static
 from django.urls import path
-from views import upload
+
+from core import settings
+
+from .views import FileListAPIView, FileUploadAPIView
+
+app_name = 'processing'
 
 urlpatterns = [
-    path('upload/', upload, basename='upload')
+    path('upload/', FileUploadAPIView.as_view(), name='upload'),
+    path('files/', FileListAPIView.as_view(), name='files')
 ]
+
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,0 +1,40 @@
+version: "3.9"
+
+volumes:
+  db_data:
+  media:
+
+services:
+  redis:
+    restart: always
+    image: redis
+
+  db:
+    restart: always
+    build:
+      context: ./drf_file_process
+    volumes:
+      - db_data:/app
+
+  drf_file_process:
+    restart: always
+    build:
+      context: ./drf_file_process
+    ports:
+      - "8000:8000"
+    command: ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
+    volumes:
+      - ./media:/app/media
+      - db_data:/app
+    depends_on:
+      - db
+
+  worker:
+    restart: always
+    build:
+      context: ./drf_file_process
+    volumes:
+      - ./media:/app/media
+      - db_data:/app
+      
+    command: ['celery', '--workdir=./.', '-A', 'core', 'worker']
